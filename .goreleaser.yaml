@@ -1,0 +1,90 @@
+# goreleaser 配置（v2 格式）。本地预演：make snapshot
+#
+# 打 tag 后由 .github/workflows/release.yml 调用：
+#   git tag v1.0.0 && git push origin v1.0.0
+
+version: 2
+
+project_name: tgup
+
+before:
+  hooks:
+    - go mod verify
+    - go test ./...
+
+builds:
+  - id: tgup
+    main: .
+    binary: tgup
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - id: tgup
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - README.md
+      - LICENSE
+      - tgup.example.yaml
+
+checksum:
+  name_template: checksums.txt
+  algorithm: sha256
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - '^ci:'
+      - 'typo'
+  groups:
+    - title: 新功能
+      regexp: '^feat'
+      order: 0
+    - title: 修复
+      regexp: '^fix'
+      order: 1
+    - title: 其他
+      order: 999
+
+release:
+  draft: false
+  prerelease: auto
+  footer: |
+    ## 安装
+
+    下载对应平台的压缩包解压即可；也可以直接：
+
+    ```sh
+    go install github.com/glongzh/tgup@{{ .Tag }}
+    ```
+
+    运行需要 `ffmpeg` / `ffprobe`（超限切割与缩略图）。凭据通过环境变量提供：
+
+    ```sh
+    export TG_API_ID=你的api_id
+    export TG_API_HASH=你的api_hash
+    ```
+
+    完整说明见 README。

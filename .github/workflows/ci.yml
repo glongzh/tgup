@@ -1,0 +1,146 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: 测试 (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # 切割与缩略图相关用例需要 ffmpeg；装不上就跳过那几条用例，不影响其余测试
+      - name: 安装 ffmpeg
+        uses: FedericoCarboni/setup-ffmpeg@v3
+        continue-on-error: true
+
+      - name: 单元测试
+        run: go test -count=1 -covermode=atomic -coverprofile=coverage.txt ./...
+
+      - name: 覆盖率
+        if: runner.os == 'Linux'
+        run: go tool cover -func=coverage.txt | tail -1
+
+      - name: 竞态检测
+        if: runner.os == 'Linux'
+        run: go test -race -count=1 ./...
+
+      - name: 上传覆盖率
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.txt
+          if-no-files-found: ignore
+
+  lint:
+    name: 格式与静态检查
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # 换行符或缩进一旦跑偏，gofmt 会第一个发现
+      - name: gofmt
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then
+            echo "::error::以下文件未格式化，请本地执行 gofmt -w ."
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: go vet
+        run: go vet ./...
+
+      - uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+
+  build:
+    name: 交叉编译 (${{ matrix.goos }}/${{ matrix.goarch }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { goos: linux, goarch: amd64 }
+          - { goos: linux, goarch: arm64 }
+          - { goos: darwin, goarch: amd64 }
+          - { goos: darwin, goarch: arm64 }
+          - { goos: windows, goarch: amd64 }
+          - { goos: windows, goarch: arm64 }
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: 构建
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: "0"
+        run: |
+          go build -trimpath -ldflags "-s -w \
+            -X main.version=ci \
+            -X main.commit=${GITHUB_SHA::7} \
+            -X main.date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            -o /dev/null .
+
+  fuzz:
+    name: 短时模糊测试
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # 只跑种子语料；真正长时间 fuzz 交给本地或定期任务
+      - name: 种子语料
+        run: go test -run '^Fuzz' ./...
+
+      - name: FuzzCaptionEntities (30s)
+        run: go test -run '^$' -fuzz '^FuzzCaptionEntities$' -fuzztime 30s .
+        continue-on-error: true
+
+      - name: FuzzParseUnits (30s)
+        run: go test -run '^$' -fuzz '^FuzzParseUnits$' -fuzztime 30s .
+        continue-on-error: true
+
+      - name: 保留崩溃用例
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-corpus
+          path: testdata/fuzz/
+          if-no-files-found: ignore

@@ -1,0 +1,38 @@
+# ---- 构建产物 ----
+/tgup
+/tgup.exe
+/dist/
+*.test
+*.out
+
+# ---- 本地凭据 / 运行时状态（绝对不要提交）----
+# tgup.yaml 是本地实际使用的配置，通常含有 api_id / api_hash。
+# 仓库里跟踪的是不含凭据的模板 tgup.example.yaml。
+/tgup.yaml
+/tgup.local.yaml
+
+# 会话文件等同于登录态，泄露即可冒充账号
+*.session
+*.session-journal
+
+# 上传台账与续传状态
+/ledger.json
+/state/
+
+# ---- 分片临时目录（源文件旁边生成）----
+.tgup-split-*/
+.retry-*/
+
+# ---- 编辑器 / 系统 ----
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+.workbuddy-ai/
+testdata/
+
+# ---- 覆盖率 ----
+coverage.txt
+coverage.html

@@ -1,0 +1,87 @@
+# tgup 配置文件模板 —— 复制成 tgup.yaml 后按需修改
+#
+#   cp tgup.example.yaml tgup.yaml && chmod 600 tgup.yaml
+#
+# 用 --from-config tgup.yaml 加载。注释掉的项表示使用内置默认值。
+# 相对路径按本文件所在目录解析。命令行显式参数优先级高于本文件。
+#
+# 注意：tgup.yaml 已被 .gitignore 忽略。请不要把填了真实凭据的配置提交到仓库。
+
+# ---------------- 目标与输入
+to: 'me'
+# inputs 通常直接写在命令行上（tgup --to me ~/Videos），这里留空即可
+# inputs: ['~/Videos']
+
+# ---------------- 文件筛选
+recursive: false
+# ext: 'mp4,mkv,mov'
+# min_size: '50MB'
+# max_size:
+sort: 'mtime'
+reverse: false
+
+# ---------------- 上行整形（规避 PCDN 判定的核心）
+rate: 50Mbps          # 速率，如 4Mbps / 500KB/s —— 唯一控制限速的字段
+burst: 30m            # 时长，如 20m —— 连续传多久，不是速率；须与 rest 成对出现
+rest: 10m             # 时长，如 10m —— 歇多久，不是速率
+window: ['00:00-23:59']
+daily_cap: '40GB'     # 大小，如 15GB
+on_cap: 'stop'        # stop 退出 / wait 等到次日
+gap_min: 20
+gap_max: 90
+
+# ---------------- 限速自检
+no_adaptive: false
+throttle_floor: 0.4
+probe_window: 180
+cooldown: '15m'       # 时长，如 15m —— 检测到被限速后的冷却时间
+# min_rate: '1Mbps'   # 速率 —— 自适应降速的下限
+
+# ---------------- 超限视频切割
+# no_split: false
+# split_dir: '~/tgup-splits'
+# keep_splits: false
+
+# ---------------- 发送选项
+# caption: '我的说明文字'
+name_caption: true
+parse_mode: none      # md / html / none
+force_document: false
+photo: false
+video: true
+# no_thumb: false
+# thumb_at: '10%'     # 10% 按时长比例，或 90s / 1.5m 绝对时间点
+# ttl: 0
+silent: false
+
+# ---------------- 传输参数
+# part_size: 512      # 单位 KB
+connections: 4        # 到 DC 的 TCP 连接数，跨洋高 RTT 链路上决定速度的主要因素
+concurrency: 4        # 并发在途分片数，应 >= connections
+retries: 5            # 必须 >= 1
+no_resume: false
+# state_dir: '~/.tgup/state'
+# ledger: '~/.tgup/ledger.json'
+force: false
+
+# ---------------- 连接
+#
+# api_id / api_hash 强烈建议不要写在这里，改用环境变量：
+#
+#   export TG_API_ID=123456
+#   export TG_API_HASH=0123456789abcdef0123456789abcdef
+#
+# 若确实要写进文件，务必 chmod 600，并确认本文件不在版本控制中。
+# 申请地址：https://my.telegram.org/apps
+#
+# api_id: '123456'
+# api_hash: '0123456789abcdef0123456789abcdef'
+# proxy: 'socks5://user:pass@host:1080'
+verbose: false
+
+# ---------------- 可选：命名档位，用 --profile <名字> 叠加
+# profiles:
+#   night:
+#     rate: 1.5Mbps
+#     window: ["23:30-06:00"]
+#     daily_cap: '5GB'

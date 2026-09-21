@@ -1,0 +1,66 @@
+# golangci-lint 配置（v2 格式）。
+#
+# 这是一份刻意保守的配置：只开启信号强、误报少的检查项。
+# 本项目的注释与常量命名沿用 Python 版的风格，因此关掉了几条与之冲突的
+# staticcheck 规则——每一条都在下面写明了原因，不要无脑重新打开。
+#
+# 本地执行：make lint
+
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  default: standard
+  enable:
+    - copyloopvar   # 循环变量捕获
+    - misspell      # 注释里的英文拼写
+    - nolintlint    # nolint 指令本身要合法且写明原因
+    - unconvert     # 多余的类型转换
+    - whitespace    # 函数体首尾空行
+
+  settings:
+    staticcheck:
+      checks:
+        - all
+        - -ST1000 # 不强制每个包都写 package 注释
+        - -ST1003 # 常量故意用 MAX_PARTS / VIDEO_EXTS 这类全大写，与 Python 版保持一致
+        - -ST1005 # 错误信息是中文，不适用「首字母小写、结尾无标点」的英文规则
+        - -ST1020 # 注释风格同上
+        - -ST1021
+        - -ST1022
+    errcheck:
+      # 不追究 `_ = f()` 这种显式忽略
+      check-blank: false
+      exclude-functions:
+        - (io.Closer).Close
+        - (*os.File).Close
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln
+        - (*strings.Builder).WriteString
+    misspell:
+      locale: US
+
+  exclusions:
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      # 测试代码里错误处理可以宽松一些
+      - path: _test\.go
+        linters:
+          - errcheck
+
+formatters:
+  # 只启用 gofmt。gofmt 是 CI 的硬门槛，本地已确认全绿。
+  enable:
+    - gofmt
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
