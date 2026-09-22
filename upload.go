@@ -86,7 +86,6 @@ func pickPartSize(size int64, maxParts int) (int, error) {
 
 func uploadFile(ctx context.Context, src string, size, mtime int64,
 	o uploadOpts) (tg.InputFileClass, error) {
-
 	name := filepath.Base(src)
 	if o.name != "" {
 		name = o.name
@@ -169,7 +168,7 @@ func uploadFile(ctx context.Context, src string, size, mtime int64,
 			continue
 		}
 
-		n := int64(min(int64(partSize), size-int64(idx)*int64(partSize)))
+		n := min(int64(partSize), size-int64(idx)*int64(partSize))
 		if o.pacer != nil {
 			if err := o.pacer.Acquire(ctx, n); err != nil {
 				setErr(err)
@@ -241,7 +240,6 @@ func uploadFile(ctx context.Context, src string, size, mtime int64,
 // sendPart 发送单个分片，带重试。调用方已持有一个信号量名额，这里负责归还。
 func sendPart(ctx context.Context, o uploadOpts, idx int, chunk []byte,
 	totalParts int, fileID int64, isBig bool, onDone func(int64)) error {
-
 	for attempt := 0; attempt < o.retries; attempt++ {
 		if ctx.Err() != nil {
 			return ctx.Err()

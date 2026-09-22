@@ -253,7 +253,6 @@ func run(o *Options) int {
 
 func (u *uploader) runInside(ctx context.Context, files []string, target string,
 	rate, burstS, restS float64, dailyCap int64, started time.Time) error {
-
 	o := u.o
 	status, err := u.client.Auth().Status(ctx)
 	if err != nil {
@@ -490,7 +489,6 @@ loop:
 
 func (u *uploader) upload(ctx context.Context, src string, size, mtime int64,
 	resume bool, prefix string) (tg.InputFileClass, error) {
-
 	partSize := 0
 	if u.o.PartSize > 0 {
 		partSize = int(u.o.PartSize * KB)
@@ -511,7 +509,6 @@ func (u *uploader) upload(ctx context.Context, src string, size, mtime int64,
 // sendOne 传一个物理文件并发出去，返回 message_id；发送失败返回 0。
 func (u *uploader) sendOne(ctx context.Context, one string, size, mtime int64,
 	prefix, caption string) (int64, error) {
-
 	handle, err := u.upload(ctx, one, size, mtime, !u.o.NoResume, prefix)
 	if err != nil {
 		return 0, err
@@ -590,7 +587,6 @@ func (u *uploader) sendOne(ctx context.Context, one string, size, mtime int64,
 // sendInParts 切段后逐段上传。全部成功才清理分片并记账，否则原样留着等重跑。
 func (u *uploader) sendInParts(ctx context.Context, src string, size, mtime int64,
 	prefix, caption string) (bool, error) {
-
 	splitDir := ""
 	if u.o.SplitDir != "" {
 		splitDir = expandTilde(u.o.SplitDir)
@@ -653,7 +649,6 @@ func (u *uploader) sendInParts(ctx context.Context, src string, size, mtime int6
 // buildMedia 组装 InputMedia。
 func (u *uploader) buildMedia(file tg.InputFileClass, src string,
 	vmeta *videoMeta, thumb tg.InputFileClass) tg.InputMediaClass {
-
 	name := filepath.Base(src)
 	if u.o.Photo {
 		photo := &tg.InputMediaUploadedPhoto{File: file}

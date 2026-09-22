@@ -80,7 +80,6 @@ type Pacer struct {
 func newPacer(rate float64, burstS, restS float64, windows []TimeWindow,
 	dailyCap int64, ledger *Ledger, onCap string, adaptive bool,
 	floor, probeS, cooldownS, minRate float64) *Pacer {
-
 	p := &Pacer{
 		rate: rate, baseRate: rate, minRate: minRate,
 		burstS: burstS, restS: restS, windows: windows,

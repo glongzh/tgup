@@ -12,5 +12,5 @@ func freeSpace(path string) int64 {
 	if err := syscall.Statfs(path, &st); err != nil {
 		return -1
 	}
-	return int64(st.Bavail) * int64(st.Bsize)
+	return int64(st.Bavail * uint64(st.Bsize))
 }

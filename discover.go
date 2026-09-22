@@ -22,7 +22,6 @@ type fileMeta struct {
 // 注意：直接指定的文件不受扩展名白名单约束（与 Python 版一致），仅目录扫描时过滤。
 func discover(inputs []string, recursive bool, exts map[string]struct{},
 	minSize, maxSize int64, sortBy string, reverse bool) []string {
-
 	found := map[string]fileMeta{}
 	explicit := map[string]struct{}{}
 
