@@ -310,11 +310,12 @@ func fitDisplay(s string, width int) string {
 	if w := dispWidth(s); w <= width {
 		return s + strings.Repeat(" ", width-w)
 	}
+	ew := runewidth.RuneWidth('…')
 	var b strings.Builder
 	used := 0
 	for _, r := range s {
 		cw := runewidth.RuneWidth(r)
-		if used+cw > width-1 {
+		if used+cw > width-ew {
 			break
 		}
 		b.WriteRune(r)

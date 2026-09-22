@@ -1047,8 +1047,11 @@ func TestFitDisplay(t *testing.T) {
 	if dispWidth(got) != 10 {
 		t.Errorf("截断宽度错误: %q width=%d", got, dispWidth(got))
 	}
-	if !strings.HasSuffix(got, "…") {
+	if !strings.HasSuffix(strings.TrimRight(got, " "), "…") {
 		t.Errorf("截断应以省略号收尾: %q", got)
+	}
+	if got := fitDisplay("中文中文a很长的标题需要被截断处理", 10); dispWidth(got) != 10 {
+		t.Errorf("混合宽度截断宽度错误: %q width=%d", got, dispWidth(got))
 	}
 }
 
